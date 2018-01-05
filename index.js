@@ -37,6 +37,10 @@ AssetsWebpackPlugin.prototype = {
         errorDetails: false,
         timings: false
       })
+
+
+      var version = []
+
             // publicPath with resolved [hash] placeholder
 
       var assetPath = (stats.publicPath && self.options.fullPath) ? stats.publicPath : ''
@@ -50,8 +54,15 @@ AssetsWebpackPlugin.prototype = {
             // }
       var assetsByChunkName = stats.assetsByChunkName
 
+      
       var output = Object.keys(assetsByChunkName).reduce(function (chunkMap, chunkName) {
-        var assets = assetsByChunkName[chunkName]
+        var chunkMetadata = {}
+        chunkMetadata.name = chunkName
+        chunkMetadata.metadata = []
+
+        //chunkName: filename
+        var assets = assetsByChunkName[chunkName] //assets: path to chunkhash file
+        
         if (!Array.isArray(assets)) {
           assets = [assets]
         }
@@ -63,11 +74,15 @@ AssetsWebpackPlugin.prototype = {
           var typeName = getAssetKind(options, asset)
           typeMap[typeName] = assetPath + asset
 
+          chunkMetadata.metadata.push({"type": typeName, "path": assetPath + asset});
+
+          version.push(chunkMetadata)
           return typeMap
         }, {})
 
         return chunkMap
       }, {})
+
 
       var manifestName = self.options.includeManifest === true ? 'manifest' : self.options.includeManifest
       if (manifestName) {
@@ -88,7 +103,7 @@ AssetsWebpackPlugin.prototype = {
         output.metadata = self.options.metadata
       }
 
-      self.writer(output, function (err) {
+      self.writer(version, function (err) {
         if (err) {
           compilation.errors.push(err)
         }
